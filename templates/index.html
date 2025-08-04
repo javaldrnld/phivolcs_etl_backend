@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHIVOLCS Earthquake Monitor</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet Draw CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    
+    <!-- Custom CSS -->
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .content {
+            display: flex;
+            height: calc(100vh - 100px);
+        }
+        
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+        
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .info-panel {
+            width: 300px;
+            background: white;
+            border-left: 1px solid #ddd;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .earthquake-count {
+            background: #3498db;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .earthquake-details {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .earthquake-details h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+        
+        .detail-item {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .detail-label {
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .magnitude-legend {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+            font-size: 13px;
+        }
+        
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid white;
+            margin-right: 8px;
+            display: inline-block;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        .legend-text {
+            color: #555;
+        }
+        
+        .search-form {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+        
+        .form-input, .form-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+        
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .date-inputs {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .date-inputs .form-input {
+            flex: 1;
+        }
+        
+        .magnitude-slider {
+            margin: 10px 0;
+        }
+        
+        .magnitude-values {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .area-selection {
+            text-align: center;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .area-status {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        /* Override notification styles */
+        .override-notification {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            max-width: 500px;
+            width: 90%;
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        .override-notification .override-content {
+            text-align: center;
+        }
+        
+        .override-notification strong {
+            color: #856404;
+            font-size: 16px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .override-notification p {
+            margin: 5px 0;
+            color: #856404;
+            font-size: 14px;
+        }
+        
+        .override-notification .btn {
+            margin-top: 10px;
+            padding: 4px 12px;
+            font-size: 12px;
+            border-radius: 4px;
+            background-color: transparent;
+            border: 1px solid #856404;
+            color: #856404;
+            cursor: pointer;
+        }
+        
+        .override-notification .btn:hover {
+            background-color: #856404;
+            color: white;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌏 PHIVOLCS Earthquake Monitor</h1>
+        <p>Real-time Earthquake Data from Philippine Institute of Volcanology and Seismology</p>
+    </div>
+    
+    <div class="content">
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+        
+        <div class="info-panel">
+            <div id="earthquake-count" class="earthquake-count">
+                <div class="loading">Loading earthquake data...</div>
+            </div>
+            
+            <!-- Earthquake Legend -->
+            <div class="earthquake-legend" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 15px; margin-bottom: 15px;">
+                <h5 style="margin: 0 0 12px 0; color: #2c3e50; font-size: 14px;">📊 Earthquake Legend</h5>
+                
+                <div style="margin-bottom: 10px;">
+                    <strong style="font-size: 12px; color: #495057;">Magnitude (Size)</strong>
+                    <div style="margin-top: 5px;">
+                        <div style="display: flex; align-items: center; margin: 2px 0;">
+                            <div style="width: 6px; height: 6px; background: #666; border-radius: 50%; margin-right: 8px;"></div>
+                            <span style="font-size: 11px;">1.0 - 1.9</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 2px 0;">
+                            <div style="width: 8px; height: 8px; background: #666; border-radius: 50%; margin-right: 8px;"></div>
+                            <span style="font-size: 11px;">2.0 - 2.9</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 2px 0;">
+                            <div style="width: 10px; height: 10px; background: #666; border-radius: 50%; margin-right: 8px;"></div>
+                            <span style="font-size: 11px;">3.0 - 3.9</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 2px 0;">
+                            <div style="width: 12px; height: 12px; background: #666; border-radius: 50%; margin-right: 8px;"></div>
+                            <span style="font-size: 11px;">4.0 - 4.9</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 2px 0;">
+                            <div style="width: 16px; height: 16px; background: #666; border-radius: 50%; margin-right: 8px;"></div>
+                            <span style="font-size: 11px;">5.0 - 5.9</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 2px 0;">
+                            <div style="width: 20px; height: 20px; background: #666; border-radius: 50%; margin-right: 8px;"></div>
+                            <span style="font-size: 11px;">6.0 - 6.9</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 2px 0;">
+                            <div style="width: 24px; height: 24px; background: #666; border-radius: 50%; margin-right: 8px;"></div>
+                            <span style="font-size: 11px;">7.0+</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <strong style="font-size: 12px; color: #495057;">Depth (Color)</strong>
+                    <div style="margin-top: 5px;">
+                        <div style="display: flex; align-items: center; margin: 2px 0;">
+                            <div style="width: 12px; height: 12px; background: #e74c3c; border-radius: 50%; margin-right: 8px;"></div>
+                            <span style="font-size: 11px;">0 - 33 km (Shallow)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 2px 0;">
+                            <div style="width: 12px; height: 12px; background: #e67e22; border-radius: 50%; margin-right: 8px;"></div>
+                            <span style="font-size: 11px;">34 - 70 km</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 2px 0;">
+                            <div style="width: 12px; height: 12px; background: #f1c40f; border-radius: 50%; margin-right: 8px;"></div>
+                            <span style="font-size: 11px;">71 - 150 km</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 2px 0;">
+                            <div style="width: 12px; height: 12px; background: #27ae60; border-radius: 50%; margin-right: 8px;"></div>
+                            <span style="font-size: 11px;">151 - 300 km</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 2px 0;">
+                            <div style="width: 12px; height: 12px; background: #3498db; border-radius: 50%; margin-right: 8px;"></div>
+                            <span style="font-size: 11px;">&gt; 300 km (Deep)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="search-form">
+                <h4 style="margin: 0 0 15px 0; color: #2c3e50;">🔍 Filter Earthquakes</h4>
+                
+                <!-- Date Range (Required) -->
+                <div class="form-group">
+                    <label class="form-label">📅 Date Range *</label>
+                    <div class="date-inputs">
+                        <input type="date" id="date-from" class="form-input" required>
+                        <input type="date" id="date-to" class="form-input" required>
+                    </div>
+                    <small id="date-range-info" style="color: #666; font-size: 11px; margin-top: 3px; display: block;">
+                        📊 Loading available date range...
+                    </small>
+                </div>
+                
+                <!-- Location Filter -->
+                <div class="form-group">
+                    <label class="form-label">📍 Location</label>
+                    <select id="location-filter" class="form-select">
+                        <option value="">All Locations</option>
+                        <option value="NCR">NCR (Metro Manila)</option>
+                        <option value="CAR">CAR (Cordillera)</option>
+                        <option value="Region I">Region I (Ilocos)</option>
+                        <option value="Region II">Region II (Cagayan Valley)</option>
+                        <option value="Region III">Region III (Central Luzon)</option>
+                        <option value="Region IV-A">Region IV-A (CALABARZON)</option>
+                        <option value="Region IV-B">Region IV-B (MIMAROPA)</option>
+                        <option value="Region V">Region V (Bicol)</option>
+                        <option value="Region VI">Region VI (Western Visayas)</option>
+                        <option value="Region VII">Region VII (Central Visayas)</option>
+                        <option value="Region VIII">Region VIII (Eastern Visayas)</option>
+                        <option value="Region IX">Region IX (Zamboanga Peninsula)</option>
+                        <option value="Region X">Region X (Northern Mindanao)</option>
+                        <option value="Region XI">Region XI (Davao)</option>
+                        <option value="Region XII">Region XII (SOCCSKSARGEN)</option>
+                        <option value="Region XIII">Region XIII (Caraga)</option>
+                        <option value="BARMM">BARMM</option>
+                    </select>
+                </div>
+                
+                <!-- Origin Filter -->
+                <div class="form-group">
+                    <label class="form-label">🌋 Origin Type</label>
+                    <select id="origin-filter" class="form-select">
+                        <option value="">All Origins</option>
+                        <option value="tectonic">Tectonic</option>
+                        <option value="volcanic">Volcanic</option>
+                        <option value="unknown">Unknown</option>
+                    </select>
+                </div>
+                
+                <!-- Magnitude Range -->
+                <div class="form-group">
+                    <label class="form-label">📊 Magnitude Range</label>
+                    <div class="magnitude-slider">
+                        <input type="range" id="magnitude-min" min="1" max="10" value="1" step="0.1">
+                        <input type="range" id="magnitude-max" min="1" max="10" value="10" step="0.1">
+                    </div>
+                    <div class="magnitude-values">
+                        <span>Min: <span id="mag-min-value">1.0</span></span>
+                        <span>Max: <span id="mag-max-value">10.0</span></span>
+                    </div>
+                </div>
+                
+                <!-- Geographic Area Selection -->
+                <div class="form-group">
+                    <label class="form-label">🗺️ Geographic Area</label>
+                    <div class="area-selection">
+                        <button type="button" id="select-area-btn" class="btn">Select Area on Map</button>
+                        <button type="button" id="clear-area-btn" class="btn btn-secondary" style="display: none;">Clear Selection</button>
+                        <div id="area-status" class="area-status">Click button to draw area on map</div>
+                    </div>
+                </div>
+                
+                <!-- Filter Button -->
+                <div class="form-group">
+                    <button type="button" id="apply-filters-btn" class="btn">🔍 Apply Filters</button>
+                    <button type="button" id="reset-filters-btn" class="btn btn-secondary">🔄 Reset to Current Month</button>
+                </div>
+            </div>
+            
+            <!-- Subtle credit -->
+            <div style="margin-top: 20px; padding: 8px; text-align: center; font-size: 10px; color: #bbb; border-top: 1px solid #eee;">
+                Created by: Ronald Javalde
+            </div>
+            
+        </div>
+    </div>
+    
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet Draw JavaScript -->
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/earthquake-map.js') }}"></script>
+</body>
+</html>
