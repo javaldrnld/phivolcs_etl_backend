@@ -280,6 +280,39 @@ function getDepthColor(depth) {
 function createPopupContent(earthquake) {
     const date = new Date(earthquake.datetime).toLocaleString();
     
+    // Build intensity information if available
+    let intensityInfo = '';
+    
+    if (earthquake.max_reported_intensity || earthquake.max_instrumental_intensity) {
+        intensityInfo = '<hr style="margin: 8px 0; border: 1px solid #ddd;">';
+        
+        if (earthquake.max_reported_intensity) {
+            intensityInfo += `
+                <p style="margin: 3px 0; font-size: 13px;">
+                    <strong>Max Reported Intensity:</strong> ${earthquake.max_reported_intensity}
+                </p>`;
+            if (earthquake.max_reported_location) {
+                intensityInfo += `
+                    <p style="margin: 3px 0; font-size: 12px; color: #666;">
+                        <em>Locations:</em> ${earthquake.max_reported_location}
+                    </p>`;
+            }
+        }
+        
+        if (earthquake.max_instrumental_intensity) {
+            intensityInfo += `
+                <p style="margin: 3px 0; font-size: 13px;">
+                    <strong>Max Instrumental Intensity:</strong> ${earthquake.max_instrumental_intensity}
+                </p>`;
+            if (earthquake.max_instrumental_location) {
+                intensityInfo += `
+                    <p style="margin: 3px 0; font-size: 12px; color: #666;">
+                        <em>Locations:</em> ${earthquake.max_instrumental_location}
+                    </p>`;
+            }
+        }
+    }
+    
     return `
         <div style="min-width: 180px; padding: 5px;">
             <h3 style="margin: 0 0 5px 0; color: #2c3e50; font-size: 16px;">
@@ -289,6 +322,7 @@ function createPopupContent(earthquake) {
             <p style="margin: 3px 0; font-size: 13px;"><strong>Location:</strong> ${earthquake.region || 'Unknown'}</p>
             <p style="margin: 3px 0; font-size: 13px;"><strong>Magnitude:</strong> ${earthquake.magnitude_str || 'Unknown'}</p>
             <p style="margin: 3px 0; font-size: 13px;"><strong>Depth:</strong> ${earthquake.depth_str || 'Unknown'}</p>
+            ${intensityInfo}
         </div>
     `;
 }
