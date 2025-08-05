@@ -756,7 +756,7 @@ def main():
     if earthquake_data:
         # Save to JSON
         scraper.save_to_json([earthquake_data], "modern_earthquake_2022.json")
-        print(f"Successfully scraped modern earthquake data:")
+        print("Successfully scraped modern earthquake data:")
         print(f"- EQ Number: {earthquake_data.get('eq_no')}")
         print(f"- DateTime: {earthquake_data.get('datetime')}")
         print(f"- Location: {earthquake_data.get('region')}")

@@ -926,11 +926,10 @@ class EarthquakeDatabase:
         lon_min=None,
         lon_max=None,
     ):
+        session = self.get_session()
         try:
             from datetime import datetime
             from sqlalchemy import and_, extract
-
-            session = self.get_session()
 
             # Get current year and month
             now = datetime.now()
@@ -1165,54 +1164,9 @@ class EarthquakeDatabase:
         except Exception as e:
             self.logger.error(f"Error getting earthquakes: {e}")
             return []
+        finally:
+            session.close()
 
 
 if __name__ == "__main__":
-    db = EarthquakeDatabase()
-    # engine = db.connect()
-    # print(f"Connection successful: {engine}")
-
-    ## print("Test two")
-    ## engine1 = db.connect()
-
-    ## print("Second connection")
-    ## engine2 = db.connect()
-
-    ## print(f"Same engine? {engine1 is engine2}")
-    # print("=== First Run (should create tables) ===")
-    # start = time.time()
-    # db.create_tables()
-    # first_time = time.time() - start
-    # print(f"First run took: {first_time:.3f} seconds")
-
-    # print("\n=== Second Run (should skip existing tables) ===")
-    # start = time.time()
-    # db.create_tables()
-    # second_time = time.time() - start
-    # print(f"Second run took: {second_time:.3f} seconds")
-
-    # print(f"\nSpeed difference: {first_time / second_time:.1f}x faster on second run")
-
-    # print("Testing get_session()...")
-    # session = db.get_session()
-    # print(f"Session created: {session}")
-    # print(f"Session engine: {session.bind}")
-    # session.close()
-    # print("Session closed")
-    # Test bulk_load_from_json with single earthquake
-    # print("=== Testing bulk_load_from_json ===")
-
-    ## Ensure tables exist
-    # print("Creating tables...")
-    # db.create_tables()
-
-    ## Test with single earthquake
-    # result = db.bulk_load_from_json("earthquake_data_year_2018_2018.json")
-    # print("Test Results:")
-    # print(result)
-    db.create_tables()
-    years = [2019, 2020, 2021, 2022, 2023, 2024, 2025]
-    for year in years:
-        result = db.bulk_load_from_json(f"earthquake_data_year_{year}_{year}.json")
-
-    print(result)
+    pass

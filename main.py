@@ -13,35 +13,6 @@ from database.earthquake_database import EarthquakeDatabase
 
 
 class DailyUpdateScraper:
-    """
-    Production-ready daily earthquake data updater for PHIVOLCS monitoring system.
-
-    This class orchestrates the complete daily update pipeline for earthquake data:
-    - Scrapes the PHIVOLCS main index page for current earthquake events
-    - Extracts individual earthquake data using robust parsing with fallback strategies
-    - Performs intelligent database upserts (INSERT/UPDATE/SKIP) based on existing data
-    - Provides comprehensive logging, progress tracking, and error handling
-
-    Architecture:
-    - Primary link extraction: Comment-based HTML navigation
-    - Fallback link extraction: Regex pattern matching for current year
-    - Individual earthquake processing: ModernEarthquakeScraper integration
-    - Database operations: EarthquakeDatabase with business key deduplication
-    - Network resilience: 3-retry exponential backoff for HTTP requests
-
-    Usage:
-        scraper = DailyUpdateScraper()
-        results = scraper.process_daily_updates()
-        print(f"Processed {results['total']} earthquakes: {results['successful']} successful")
-
-    Attributes:
-        base_url (str): PHIVOLCS main page URL
-        request_delay (float): Delay between requests for rate limiting
-        logger (logging.Logger): Configured logger for operation tracking
-        eq_database (EarthquakeDatabase): Database interface for upsert operations
-        modern_scraper (ModernEarthquakeScraper): Individual earthquake page scraper
-    """
-
     def __init__(
         self,
         base_url: str = "https://earthquake.phivolcs.dost.gov.ph/",
@@ -247,12 +218,6 @@ class DailyUpdateScraper:
         if not scrape_eq.get("eq_no") or not scrape_eq.get("datetime"):
             self.logger.error("Invalid earthquake data: missing critical fields")
             return "Failed: Invalid data"
-
-        # Print scraped data for testing
-        # print("=" * 50)
-        # print("Scraped earthquake data:")
-        # print(scrape_eq)
-        # print("=" * 50)
 
         # Call Database to save/update the earthquake
         self.logger.info("Starting to database upsert operation")
