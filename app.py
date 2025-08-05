@@ -209,7 +209,6 @@ def admin_panel():
         "admin.html",
         scraper_status=scraper_status,
         db_stats=db_stats,
-        # admin_token=request.args.get("token"),
     )
 
 
