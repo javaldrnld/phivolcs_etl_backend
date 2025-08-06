@@ -92,6 +92,21 @@ services:
       - scheduler
     command: ["python", "cron_scraper.py"]
 
+  # Cloudflare Tunnel - Public Access
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: phivolcs_tunnel
+    command: tunnel --url http://web:5000
+    depends_on:
+      web:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 # Persistent volumes
 volumes:
   postgres_data:

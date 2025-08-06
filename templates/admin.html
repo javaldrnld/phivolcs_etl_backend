@@ -360,7 +360,12 @@
             btn.textContent = '🔄 Starting...';
             
             fetch(`/admin/trigger?token=${adminToken}`)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.error) {
                         alert('Error: ' + data.error);
@@ -373,7 +378,7 @@
                     }
                 })
                 .catch(error => {
-                    alert('Error: ' + error);
+                    alert('Connection Error: ' + error.message + '\n\nPlease ensure the Flask app is running.');
                     btn.disabled = false;
                     btn.textContent = '🚀 Start Manual Update';
                 });
@@ -381,9 +386,20 @@
         
         function refreshStatus() {
             fetch(`/admin/status?token=${adminToken}`)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     updateStatus(data);
+                })
+                .catch(error => {
+                    console.error('Status refresh failed:', error);
+                    // Show error in UI
+                    const statusElement = document.getElementById('scraper-status');
+                    statusElement.innerHTML = '<span class="status-error">CONNECTION ERROR</span>';
                 });
         }
         
@@ -420,7 +436,12 @@
         function pollStatus() {
             const pollInterval = setInterval(() => {
                 fetch(`/admin/status?token=${adminToken}`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         updateStatus(data);
                         
@@ -428,6 +449,10 @@
                         if (!data.running) {
                             clearInterval(pollInterval);
                         }
+                    })
+                    .catch(error => {
+                        console.error('Status polling failed:', error);
+                        // Continue polling despite error
                     });
             }, 3000); // Poll every 3 seconds
         }
