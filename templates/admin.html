@@ -352,7 +352,9 @@
     </div>
     
     <script>
-        const adminToken = '{{ admin_token }}';
+        // Get admin token from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const adminToken = urlParams.get('token') || '{{ admin_token }}';
         
         function triggerScraper() {
             const btn = document.getElementById('trigger-btn');

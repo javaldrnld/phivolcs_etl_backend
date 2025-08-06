@@ -222,6 +222,10 @@ class DailyUpdateScraper:
         # Call Database to save/update the earthquake
         self.logger.info("Starting to database upsert operation")
         upsert = self.eq_database.process_live_update(scrape_eq)
+        
+        # Validate database operation result
+        if upsert is None:
+            return "Failed: Database operation returned None"
 
         # Return success or fail
         return upsert

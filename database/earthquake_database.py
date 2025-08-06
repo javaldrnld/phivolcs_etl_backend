@@ -764,9 +764,9 @@ class EarthquakeDatabase:
                 eq_dict["created_at"] = datetime.now()
                 eq_dict["updated_at"] = datetime.now()
             else:
-                self.logger.warning(
-                    f"Failed to generate business key for EQ #{eq_dict.get('eq_no', 'unknown')}"
-                )
+                error_msg = f"Failed to generate business key for EQ #{eq_dict.get('eq_no', 'unknown')}"
+                self.logger.warning(error_msg)
+                return error_msg
 
             # Filter by business key and get the first matching
             existing_record = (
@@ -835,7 +835,9 @@ class EarthquakeDatabase:
                 except Exception as e:
                     # Use rollback to undo changes mande in this session since the last commit
                     session.rollback()
-                    self.logger.error(f"Failed to insert earthquake: {e}")
+                    error_msg = f"Failed to insert earthquake: {e}"
+                    self.logger.error(error_msg)
+                    return error_msg
 
             # Can directly access because we select all field earlier
             if existing_record.eq_no < eq_dict["eq_no"]:
@@ -869,8 +871,9 @@ class EarthquakeDatabase:
                         }
                     )
 
-                    # Clear existing intensities -> To update
-                    existing_record.intensities.clear()
+                    # Delete existing intensities explicitly to avoid foreign key issues
+                    session.query(Intensities).filter(Intensities.eq_id == existing_record.eq_id).delete()
+                    session.flush()  # Flush the delete before adding new intensities
 
                     for intensity_data in eq_dict["reported_intensities"]:
                         for location in intensity_data["locations"]:
@@ -890,7 +893,7 @@ class EarthquakeDatabase:
                             )
                             existing_record.intensities.append(intensity_obj)
 
-                    # Add the eq to database
+                    # Commit all changes
                     session.commit()
                     self.logger.info(
                         f"Successfully update earthquake #{eq_dict.get('eq_no', 'unknown')}"
@@ -899,7 +902,9 @@ class EarthquakeDatabase:
                 except Exception as e:
                     # Use rollback to undo changes mande in this session since the last commit
                     session.rollback()
-                    self.logger.error(f"Failed to insert earthquake: {e}")
+                    error_msg = f"Failed to insert earthquake: {e}"
+                    self.logger.error(error_msg)
+                    return error_msg
 
             else:
                 self.logger.info(
@@ -908,8 +913,9 @@ class EarthquakeDatabase:
                 return "Successful skipping earthquake"
 
         except Exception as e:
-            self.logger.error(f"Error in process_live_update: {e}")
-            return None
+            error_msg = f"Error in process_live_update: {e}"
+            self.logger.error(error_msg)
+            return error_msg
         finally:
             session.close()
 
