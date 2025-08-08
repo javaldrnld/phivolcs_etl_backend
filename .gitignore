@@ -11,7 +11,7 @@ logs/
 *.db
 *.sqlite
 *.sqlite3
-*.sql
+.sql
 postgres_data/
 
 # Python cache and build files

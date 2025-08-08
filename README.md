@@ -3,7 +3,7 @@
 **Production-Grade ETL System**: Automated data pipeline processing 100k+ earthquake records from PHIVOLCS (Philippine Institute of Volcanology and Seismology) with real-time ingestion, intelligent deduplication, and interactive web visualization.
 
 ### Live Demo
-🌐 **Live System**: https://screw-gene-fixed-times.trycloudflare.com/
+🌐 **Live System**: https://thu-united-housing-guild.trycloudflare.com/
 
 > **Note**: This demo runs on a Raspberry Pi with Cloudflare Tunnel (free tier). The URL may change periodically due to tunnel restarts or Pi maintenance. For stable access, please run locally.
 
